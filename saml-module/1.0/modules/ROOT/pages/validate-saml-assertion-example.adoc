@@ -1,0 +1,17 @@
+= SAML assertion validation example - Mule 4
+:page-aliases: connectors::saml/validate-saml-assertion-example.adoc
+
+
+.Generate assertion dynamically
+[source,xml,linenums]
+----
+<saml:validation-config name="SAML_Validation_config" >
+    <saml:truststore path="/path/to/your/trueStore" password="yourPassword" />
+</saml:validation-config>
+
+<saml:validate-assertion config-ref="SAML_Validation_config" elementPath="//soapenv:Envelope/soapenv:Header/wsse:Security">
+    <saml:required-confirmation-methods >
+        <saml:required-confirmation-method value="BEARER" />
+    </saml:required-confirmation-methods>
+</saml:validate-assertion>
+----

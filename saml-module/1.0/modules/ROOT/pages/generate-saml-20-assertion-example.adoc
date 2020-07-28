@@ -1,0 +1,54 @@
+= SAML assertion generation examples - Mule 4
+:page-aliases: connectors::saml/generate-saml-20-assertion-example.adoc
+
+== Generate assertion dynamically
+
+.Generate assertion dynamically
+[source,xml,linenums]
+----
+<saml:generation-config name="SAML_Generation_config" issuer="Mulesoft" skewTime="60">
+    <saml:signature>
+        <saml:keystore path="keystore.jceks" type="JCEKS" password="yourPassword" alias="theAlias" keyPassword="yourKeyPassword" />
+        <saml:key-information addIssuerSerial="true" />
+    </saml:signature>
+    <saml:namespace-directory >
+        <saml:namespaces >
+            <saml:namespace prefix="soapenv" uri="http://schemas.xmlsoap.org/soap/envelope/" />
+            <saml:namespace prefix="soap12" uri="http://schemas.xmlsoap.org/wsdl/soap12/" />
+            <saml:namespace prefix="wsse" uri="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" />
+        </saml:namespaces>
+    </saml:namespace-directory>
+</saml:generation-config>
+
+<saml:saml20-conditions name="Saml_20_conditions" assertionValidity="30" assertionValidityTimeUnit="MINUTES" skewTime="60" skewTimeUnit="MINUTES"/>
+
+<saml:generate-saml20-assertion config-ref="SAML_Generation_config"
+                                elementPath="//soapenv:Envelope/soapenv:Header/wsse:Security"
+                                saml20-attribute-statements="#[[{
+                                    attributes : vars.attrs map (attr, index) -> {
+                                        qualifiedName: attr.name,
+                                        attributeValues: attr.values
+                                    }
+                                }]]"
+                                saml20-conditions="Saml_20_conditions">
+    <saml:content>#[output text/xml
+        ns soapenv http://schemas.xmlsoap.org/soap/envelope/
+        ns wsse http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd
+        ---
+        {
+            soapenv#Envelope: {
+                soapenv#Header: {
+                    wsse#Security: null
+                },
+                soapenv#Body: null
+            }
+        }]
+    </saml:content>
+    <saml:saml20-subject confirmationMethod="BEARER">
+        <saml:saml20-name-id value="#[vars.subject]"/>
+    </saml:saml20-subject>
+    <saml:saml20-authentication-statements>
+        <saml:saml20-authentication-statement authenticationMethod="Password" sessionValidity="30" sessionValidityTimeUnit="MINUTES" subjectLocalityIpAddress="0.0.0.0" />
+    </saml:saml20-authentication-statements>
+</saml:generate-saml20-assertion>
+----
